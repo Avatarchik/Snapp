@@ -8,6 +8,7 @@
 
 #import "SignupViewController.h"
 #import "SignupViewModel.h"
+#import "Reachability.h"
 
 @interface SignupViewController ()
 
@@ -48,6 +49,15 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:YES];
     [self.navigationController.navigationBar setHidden:true];
+    
+    // check for internet connection
+    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
+    
+    if (networkStatus == NotReachable) { // if there's no internet
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Woops!" message:@"Your device appears to not have an internet connection. Unfortunately Snap Scramble requires internet to play." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertView show];
+    }
 }
 
 -(void)viewWillDisappear:(BOOL)animated
@@ -153,7 +163,7 @@
         [self.viewModel signUpUser:username password:password email:email completion:^(FIRUser *user, NSError *error) {
             if (error) {
                 NSLog(@"%@", error);
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Sorry" message:[error.userInfo objectForKey:@"error"] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil]; // change this alert view
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
                 [alertView show];
                 [KVNProgress dismiss];
             }

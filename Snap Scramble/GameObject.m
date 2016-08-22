@@ -49,7 +49,7 @@
         self.totalSeconds = [NSNumber numberWithInt:value + 1];
         [self.gameDelegate updateTimerLabel:self.totalSeconds]; // update timer label so that the time is shown
         // NSLog(@"time: %@", self.totalSeconds);
-        if (self.puzzle.puzzleSolved) {
+        if ([self.puzzle puzzleSolved]) {
             NSLog(@"solved the puzzle in: %@ seconds", self.totalSeconds);
             [self.gameTimer invalidate];
             NSLog(@"executing here because the puzzle was solved. next step is to update the UI.");

@@ -122,7 +122,7 @@
     // set the button size
     CGRect statsButtonFrame = self.statsButton.frame;
     statsButtonFrame.size = CGSizeMake(295.0, 40.0);
-    self.statsButton.frame = statsButtonFrame;
+    self.statsButton.frame =  statsButtonFrame;
     
     [self.statsButton setCenter:CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height - 60)];
     [self.statsButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -192,7 +192,7 @@
 #pragma mark - Navigation
 
 - (IBAction)statsButtonDidPress:(id)sender {
-    // in the GameOverVC, show stats menu and then change turns
+    // in the GameOverVC, show stats menu and change turns
     [self performSegueWithIdentifier:@"showStats" sender:self];
 }
 
@@ -201,28 +201,15 @@
 }
 
 - (IBAction)replyButtonDidPress:(id)sender {
-    // delegate allows us to transfer user's data back to  StartPuzzleVC for creating puzzle game
+    // delegate allows us to transfer user's data back to StartPuzzleVC for creating puzzle game
     [self.delegate receiveReplyGameData2:self.createdGame andOpponent:self.opponent andRound:self.roundObject];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-// when the main menu button is pressed, switch turns at that point.
+// when the main menu button is pressed, go to ChallengeVC
 - (IBAction)mainMenuButtonDidPress:(id)sender {
-    [self.viewModel switchTurns];
-    [self.viewModel saveCurrentGame:^(BOOL succeeded, NSError *error) {
-        if (error) {
-            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
-            [alertView show];
-        }
-        
-        else { // sent game
-            NSLog(@"the turn was switched successfully.");
-            [self.navigationController popToRootViewControllerAnimated:YES];
-            // [self.viewModel sendNotificationToOpponent]; // send the push notification
-        }
-    }];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
-
 
 
 // In a storyboard-based application, you will often want to do a little preparation before navigation

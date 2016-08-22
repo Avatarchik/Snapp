@@ -9,6 +9,7 @@
 #import "StartPuzzleViewController.h"
 #import "GameViewController.h"
 #import "Snap_Scramble-Swift.h"
+#import "Reachability.h"
 
 @interface StartPuzzleViewController ()
 
@@ -39,8 +40,11 @@
     self.startPuzzleButton.titleLabel.minimumScaleFactor = 0.5;
     self.cancelButton.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.cancelButton.titleLabel.minimumScaleFactor = 0.5;
+    self.currentUserTimeLabel.adjustsFontSizeToFitWidth = YES;
+    self.currentUserTimeLabel.contentScaleFactor = 0.5;
+    self.opponentTimeLabel.adjustsFontSizeToFitWidth = YES;
+    self.opponentTimeLabel.contentScaleFactor = 0.5;
  
-
     if (!self.image) { // if the image is being retrieved from the server by the receiving player
         // Adds a status below the circle
         [KVNProgress showWithStatus:@"Downloading..."];
@@ -56,11 +60,65 @@
                 
                 NSLog(@"downloaded image after resizing: %@", self.image);
                 self.startPuzzleButton.userInteractionEnabled = true;
+                [self updateStatsView]; // set up the stats view.
+            }
+            
+            else { // if error
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
                 [KVNProgress dismiss];
             }
         }];
     }
 }
+
+- (void)updateStatsView {
+    self.roundObject = [self.createdGame objectForKey:@"round"]; // set the round object variable
+    self.currentUserTimeLabel.text = [NSString stringWithFormat:@"It's your turn to play %@'s puzzle.", self.opponent.username];
+    
+    [self.roundObject fetchIfNeededInBackgroundWithBlock:^(PFObject * _Nullable object, NSError * _Nullable error) {
+        if (error) {
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+            [alertView show];
+            [KVNProgress dismiss];
+        }
+        
+        else {
+            
+            NSString *opponentName = [self.createdGame objectForKey:@"senderName"];
+            if ([[self.createdGame objectForKey:@"receiverName"] isEqualToString:[PFUser currentUser].username]) { // if current user is the receiver. This code is executed when the user plays a game someone else sent him.
+                self.opponentTotalSeconds = [self.roundObject objectForKey:@"senderTime"];
+                
+                if (self.opponentTotalSeconds != nil) {
+                    
+                    // format the opponent's time
+                    int intValueTotalSeconds = [self.opponentTotalSeconds intValue];
+                    int minutes = 0; int seconds = 0;
+                    
+                    seconds = intValueTotalSeconds % 60;
+                    if (intValueTotalSeconds >= 60) {
+                        minutes = intValueTotalSeconds / 60;
+                    }
+                    
+                    if (seconds < 10) {
+                        self.opponentTimeLabel.text = [NSString stringWithFormat:@"%@'s time: %d:0%d", opponentName, minutes, seconds];
+                    }
+                    
+                    else if (seconds >= 10) {
+                        self.opponentTimeLabel.text = [NSString stringWithFormat:@"%@'s time: %d:%d", opponentName, minutes, seconds];
+                    }
+                }
+                
+                else {
+                    NSLog(@"something went wrong.");
+                }
+            }
+            
+            [KVNProgress dismiss];
+        }
+    }];
+}
+
 
 -(UIImage*)prepareImageForGame:(UIImage*)image {
     if (image.size.height > image.size.width) { // portrait
@@ -80,7 +138,18 @@
 }
 
 - (IBAction)startGame:(id)sender {
-    [self performSegueWithIdentifier:@"beginGame" sender:self];
+    // check for network connection.
+    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
+    
+    if (networkStatus == NotReachable) { // if there's no internet
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Woops!" message:@"Your device appears to not have an internet connection. Unfortunately Snap Scramble requires internet to play." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertView show];
+    }
+    
+    else {
+        [self performSegueWithIdentifier:@"beginGame" sender:self];
+    }
 }
 
 - (UIImage *)imageWithImage:(UIImage *)image scaledToFillSize:(CGSize)size

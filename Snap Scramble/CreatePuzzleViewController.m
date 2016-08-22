@@ -172,7 +172,6 @@
         
         else if (self.createdGame == nil) { // entirely new game
             NSLog(@"Game hasn't been started yet: %@", self.createdGame);
-            
         }
         
         previewPuzzleViewController.opponent = self.opponent;
@@ -191,7 +190,6 @@
         
         else if (self.createdGame == nil) { // entirely new game
             NSLog(@"Game hasn't been started yet: %@", self.createdGame);
-            
         }
         
         NSLog(@"Opponent: %@", self.opponent);

@@ -9,14 +9,33 @@
 #import "CameraViewController.h"
 #import "PreviewPuzzleViewController.h"
 #import "ViewUtils.h"
+#import "LLSimpleCamera.h"
+#import "DKEditorView.h"
+
 
 @interface CameraViewController ()
+// camera outlets
 @property (strong, nonatomic) LLSimpleCamera *camera;
 @property (strong, nonatomic) UILabel *errorLabel;
 @property (strong, nonatomic) UIButton *snapButton;
 @property (strong, nonatomic) UIButton *switchButton;
 @property (strong, nonatomic) UIButton *flashButton;
 @property (strong, nonatomic) UISegmentedControl *segmentedControl;
+@property (nonatomic) IBOutlet UIButton *cameraBackButton;
+
+
+//editor outlets
+@property (nonatomic) UIViewController *editorViewController;
+@property (nonatomic) IBOutlet DKEditorView *editorView;
+@property (nonatomic) IBOutlet UIButton *checkButton;
+@property (nonatomic) IBOutlet UIButton *backButton;
+@property (nonatomic) IBOutlet UIButton *crayonButton;
+@property (nonatomic) IBOutlet UIButton *textButton;
+@property (nonatomic) IBOutlet DKVerticalColorPicker *verticalImagePicker;
+
+// editor actions
+-(IBAction)confirm:(id)sender;
+-(IBAction)backButtonDidPress:(id)sender;
 @end
 
 @implementation CameraViewController
@@ -26,7 +45,6 @@
     [super viewDidLoad];
     
     self.view.backgroundColor = [UIColor blackColor];
-    [self.navigationController setNavigationBarHidden:YES animated:NO];
     
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     
@@ -108,6 +126,13 @@
     [self.snapButton addTarget:self action:@selector(snapButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:self.snapButton];
     
+    // button to go back in camera view
+    self.cameraBackButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    self.cameraBackButton.frame = CGRectMake(0, 0, 18, 42);
+    [self.cameraBackButton setImage:[UIImage imageNamed:@"icon-back.png"] forState:UIControlStateNormal];
+    [self.cameraBackButton addTarget:self action:@selector(cameraBackButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.cameraBackButton];
+    
     // button to toggle flash
     self.flashButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.flashButton.frame = CGRectMake(0, 0, 16.0f + 20.0f, 24.0f + 20.0f);
@@ -153,57 +178,9 @@
     }
 }
 
+
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
     return YES;
-}
-
-
-/* camera button methods */
-
-- (void)switchButtonPressed:(UIButton *)button
-{
-    [self.camera togglePosition];
-}
-
-- (NSURL *)applicationDocumentsDirectory
-{
-    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-}
-
-- (void)flashButtonPressed:(UIButton *)button
-{
-    if(self.camera.flash == LLCameraFlashOff) {
-        BOOL done = [self.camera updateFlashMode:LLCameraFlashOn];
-        if(done) {
-            self.flashButton.selected = YES;
-            self.flashButton.tintColor = [UIColor yellowColor];
-        }
-    }
-    else {
-        BOOL done = [self.camera updateFlashMode:LLCameraFlashOff];
-        if(done) {
-            self.flashButton.selected = NO;
-            self.flashButton.tintColor = [UIColor whiteColor];
-        }
-    }
-}
-
-- (void)snapButtonPressed:(UIButton *)button
-{
-    __weak typeof(self) weakSelf = self;
-    
-    // capture
-    [self.camera capture:^(LLSimpleCamera *camera, UIImage *image, NSDictionary *metadata, NSError *error) {
-        if(!error) {
-            self.originalImage = image;
-            self.cameraImage = image;
-            self.cameraImage = [self prepareImageForGame:self.cameraImage]; // resize camera image for game
-            [self performSegueWithIdentifier:@"previewPuzzleSender" sender:self]; // transfer photo to next view controller (PreviewPuzzleViewController)
-        }
-        else {
-            NSLog(@"An error has occured: %@", error);
-        }
-    } exactSeenImage:YES];
 }
 
 /* other lifecycle methods */
@@ -223,8 +200,8 @@
     self.switchButton.top = 5.0f;
     self.switchButton.right = self.view.width - 5.0f;
     
-    self.segmentedControl.left = 12.0f;
-    self.segmentedControl.bottom = self.view.height - 35.0f;
+    self.cameraBackButton.top = 5.0f;
+    self.cameraBackButton.left = 15.0f;
 }
 
 - (BOOL)prefersStatusBarHidden
@@ -289,6 +266,97 @@
     UIGraphicsEndImageContext();
     
     return newImage;
+}
+
+
+/* camera button methods */
+
+- (void)switchButtonPressed:(UIButton *)button
+{
+    [self.camera togglePosition];
+}
+
+- (NSURL *)applicationDocumentsDirectory
+{
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
+- (void)flashButtonPressed:(UIButton *)button
+{
+    if(self.camera.flash == LLCameraFlashOff) {
+        BOOL done = [self.camera updateFlashMode:LLCameraFlashOn];
+        if(done) {
+            self.flashButton.selected = YES;
+            self.flashButton.tintColor = [UIColor yellowColor];
+        }
+    }
+    else {
+        BOOL done = [self.camera updateFlashMode:LLCameraFlashOff];
+        if(done) {
+            self.flashButton.selected = NO;
+            self.flashButton.tintColor = [UIColor whiteColor];
+        }
+    }
+}
+
+- (void)snapButtonPressed:(UIButton *)button
+{
+    __weak typeof(self) weakSelf = self;
+    
+    // capture
+    [self.camera capture:^(LLSimpleCamera *camera, UIImage *image, NSDictionary *metadata, NSError *error) {
+        if(!error) {
+            self.cameraImage = image;
+            self.cameraImage = [self prepareImageForGame:self.cameraImage]; // resize camera image for game
+            
+            // set this up so user can edit the image
+            self.editorViewController = [[UIViewController alloc] init];
+            [[NSBundle mainBundle] loadNibNamed:@"DKImageEdit" owner:self options:nil];
+            self.editorView.frame = self.view.frame;
+            self.editorViewController.view = self.editorView;
+            self.editorView.image = self.cameraImage;
+            self.editorView = nil;
+            [self presentViewController:self.editorViewController animated:NO completion:nil];
+
+            
+            // [self performSegueWithIdentifier:@"previewPuzzleSender" sender:self]; // transfer photo to next view controller (PreviewPuzzleViewController)
+        }
+        else {
+            NSLog(@"An error has occured: %@", error);
+        }
+    } exactSeenImage:YES];
+}
+
+- (IBAction)cameraBackButtonPressed:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+
+# pragma mark - image edit methods
+
+
+-(IBAction)confirm:(id)sender
+{
+    self.backButton.hidden = YES;
+    self.checkButton.hidden = YES;
+    self.verticalImagePicker.hidden = YES;
+    self.textButton.hidden = YES;
+    self.crayonButton.hidden = YES;
+    DKEditorView *dkev = (DKEditorView *)self.editorViewController.view;
+    UIGraphicsBeginImageContext(dkev.frame.size);
+    [dkev.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *temp = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    self.editorViewController = nil; // release
+    self.cameraImage = temp; // set the edited image to be passed.
+    self.originalImage = temp; // set the edited image to be passed
+    [self.navigationController dismissViewControllerAnimated:NO completion:NULL]; // dismiss the editorviewcontroller
+    [self performSegueWithIdentifier:@"previewPuzzleSender" sender:self]; // transfer photo to next view controller (PreviewPuzzleViewController)
+}
+
+-(IBAction)backButtonDidPress:(id)sender {
+    [self.navigationController dismissViewControllerAnimated:NO completion:NULL]; // dismiss the editorviewcontroller
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {

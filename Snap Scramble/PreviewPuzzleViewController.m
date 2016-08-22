@@ -147,7 +147,7 @@
     NSString *fileName;
     NSString *fileType;
     
-    if (self.originalImage != nil) { // just make sure that there is no problem and that images were selected
+    if (self.originalImage != nil) { // just make sure that there is no problem and that an image was selected/created
         if (self.puzzleSize != nil) { // make sure a puzzle size was chosen in memory
             UIImage* tempOriginalImage = self.originalImage;
             fileData = UIImageJPEGRepresentation(tempOriginalImage, 0.6); // compress original image
@@ -156,7 +156,7 @@
             self.sendButton.userInteractionEnabled = NO;
             NSLog(@"image before upload: %@", self.originalImage);
    
-            // Adds a status below the circle
+           
             [KVNProgress showWithStatus:@"Starting game... Get ready to solve the puzzle as fast as possible."];
             
             [self setViewModelProperties]; // set view model properties
@@ -165,8 +165,9 @@
             // save image file and cloud game model
             [self.viewModel saveFile:^(BOOL succeeded, NSError *error) {
                 if (error) {
-                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
                     [alertView show];
+                    [KVNProgress dismiss];
                 }
                
                 else {

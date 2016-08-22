@@ -30,5 +30,8 @@
 @property (nonatomic, strong) UIImage* compressedUploadImage;
 @property (weak, nonatomic) IBOutlet SpringView *scoreView;
 @property (nonatomic, strong) PFObject* roundObject;
+@property (nonatomic, strong) NSNumber* opponentTotalSeconds;
+@property (weak, nonatomic) IBOutlet DesignableTextField *currentUserTimeLabel; // the current user's time label
+@property (weak, nonatomic) IBOutlet DesignableTextField *opponentTimeLabel; // the opponent's time label
 
 @end

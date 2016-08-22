@@ -44,7 +44,7 @@
 }
 
 - (IBAction)logoutButtonDidPress:(id)sender {
-    [[FIRAuth auth] signOut:nil]; // log out current user
+    [PFUser logOut]; // log out current user
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
 

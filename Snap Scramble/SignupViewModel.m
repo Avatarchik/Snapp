@@ -21,8 +21,10 @@
          [userRef observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot *snapshot) {
              NSDictionary *snapshotDict = snapshot.value;
              if (![snapshotDict isEqual:[NSNull null]]) {
+                 NSLog(@"wtf");
                  completion(nil, [NSError errorWithDomain:@"signup" code:500 userInfo:@{NSLocalizedDescriptionKey: @"User already exists"}]);
              } else {
+                 NSLog(@"wtf2");
                  [userRef setValue:@{@"uid": user.uid}];
                  FIRUserProfileChangeRequest *changeRequest = [user profileChangeRequest];
                  changeRequest.displayName = username;

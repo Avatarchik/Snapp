@@ -17,7 +17,8 @@
 @property (nonatomic, strong) PFObject* roundObject;
 
 - (void)updateGame;
-
+- (void)switchTurns;
+- (void)saveCurrentGame:(void (^)(BOOL succeeded, NSError *error))completion;
   
 
 

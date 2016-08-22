@@ -16,10 +16,24 @@
         self.frame = frame;
         self.puzzle = gameObject.puzzle; // assign the private property so that it can be accessed on all methods.
         self.game = gameObject;
+        
         // timer creation and start
         self.timerLabel = [UILabel new];
-        self.timerLabel.frame = CGRectMake(self.frame.size.width / 2, 1, 160.0, 40.0);
+        self.timerLabel.frame = CGRectMake(self.frame.size.width / 2 - 15, 1, 160.0, 40.0);
         [self addSubview:self.timerLabel];
+        
+        // pause button creation
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+        [button addTarget:self
+                   action:@selector(pauseButtonDidPress:)
+         forControlEvents:UIControlEventTouchUpInside];
+        [button setTitle:@"Pause" forState:UIControlStateNormal];
+        UIFont *myFont = [UIFont fontWithName: @"Avenir Next" size: 18.0 ];
+        button.titleLabel.font = myFont;
+        [button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        button.frame = CGRectMake(self.frame.size.width / 2 + 95, 6, 60.0, 21.0);
+        button.adjustsImageWhenHighlighted = YES;
+        [self addSubview:button];
         
         // create the actual puzzle that the user interacts with
         if (self.puzzle.puzzleImage.size.height > self.puzzle.puzzleImage.size.width) { // if the image is portrait, create a portrait puzzle
@@ -153,20 +167,6 @@
             count++;
             // NSLog(@"x : %f    y : %f", x, y);
             x = x + sideLengthX; // add a target view's X length each time the column loop is traversed
-            
-            if (j == (col - 1) && i == 0) { // if the last column of the first row is being created, put a pause button there
-                UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-                [button addTarget:self
-                           action:@selector(pauseButtonDidPress:)
-                 forControlEvents:UIControlEventTouchUpInside];
-                [button setTitle:@"Pause" forState:UIControlStateNormal];
-                UIFont *myFont = [UIFont fontWithName: @"Avenir Next" size: 18.0 ];
-                button.titleLabel.font = myFont;
-                button.frame = CGRectMake(0, 0, 60.0, 21.0);
-                button.center = target.center;
-                button.adjustsImageWhenHighlighted = YES;
-                [self addSubview:button];
-            }
         }
         // NSLog(@"x : %f    y : %f", x, y);
         y = y + sideLengthY; // add a target view's Y length each time the row loop is traversed
@@ -317,7 +317,6 @@
             CGRect rect = CGRectMake(x, y, sideLengthX, sideLengthY);
             CGImageRef cImage = CGImageCreateWithImageInRect([image CGImage],  rect); // coregraphics method!
             UIImage* dImage = [[UIImage alloc]initWithCGImage:cImage];
-            NSLog(@"cImage: %@   dImage: %@", cImage, dImage);
             [images addObject:dImage];
             x = x + sideLengthX;
         }

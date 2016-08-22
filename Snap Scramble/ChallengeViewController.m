@@ -35,10 +35,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
     [self.navigationController.navigationBar setHidden:false];
     self.currentGamesTable.delegate = self;
     self.currentGamesTable.dataSource = self;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadTable:) name:@"reloadTheTable" object:nil]; // reload the table if the user receives a notification?
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadTable:) name:@"reloadTheTable" object:nil]; // reload the table if the user receives a notification? isn't working for some reason.
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(retrieveUserMatches) forControlEvents:UIControlEventValueChanged];
     [self.currentGamesTable addSubview:self.refreshControl];
@@ -53,14 +54,6 @@
     self.challengeButton.adjustsImageWhenHighlighted = NO;
     
     
-    // check for internet connection, send a friendly message.
-    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
-    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
-    
-    if (networkStatus == NotReachable) { // if there's no internet
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Woops!" message:@"Your device appears to not have an internet connection. Unfortunately Snap Scramble requires internet to play." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alertView show];
-    }
     
     // this is for push notifications.
    /* PFUser *currentUser = [PFUser currentUser];
@@ -75,13 +68,13 @@
     self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
     [self.navigationController.navigationBar setHidden:false];
     
-    FIRUser *currentUser = [FIRAuth auth].currentUser;
-    if (currentUser && currentUser.displayName) {
-        NSLog(@"Current user: %@", currentUser.displayName);
-        // [self.currentGamesTable reloadData]; // reload the table view
-        // [self retrieveUserMatches]; // retrieve all games, both pending and current
+    PFUser *currentUser = [PFUser currentUser];
+    if (currentUser) {
+        NSLog(@"Current user: %@", currentUser.username);
+        [self.currentGamesTable reloadData]; // reload the table view
+        [self retrieveUserMatches]; // retrieve all games, both pending and current
         NSString* usernameText = @"Username: ";
-        usernameText = [usernameText stringByAppendingString:currentUser.displayName];
+        usernameText = [usernameText stringByAppendingString:currentUser.username];
         [self.usernameLabel setText:usernameText];
     }
     
@@ -98,7 +91,15 @@
     }
 }
 
-- (void)reloadTable:(NSNotification *)notification {
+- (void)reloadTable:(NSNotification *)notification { // for some reason this isn't working.
+    // check for internet connection
+    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
+    
+    if (networkStatus == NotReachable) { // if there's no internet
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Woops!" message:@"Your device appears to not have an internet connection. Unfortunately Snap Scramble requires internet to play." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertView show];
+    }
     [self retrieveUserMatches];
 }
 
@@ -110,35 +111,50 @@
 #pragma mark - userMatchesTable code
 
 - (void)retrieveUserMatches {
-    [self.viewModel retrievePendingMatches:^(NSArray *matches, NSError *error) {
-        if (error) {
-            NSLog(@"Error %@ %@", error, [error userInfo]);
-        }
-        
-        else {
-            if ([self.refreshControl isRefreshing]) {
-                [self.refreshControl endRefreshing];
-            }
-            
-            self.currentPendingGames = matches;
-            [self.currentGamesTable reloadData];
-        }
-    }];
+    // check for network connection.
+    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    [self.viewModel retrieveCurrentMatches:^(NSArray *matches, NSError *error) {
-        if (error) {
-            NSLog(@"Error %@ %@", error, [error userInfo]);
-        }
-        
-        else {
-            if ([self.refreshControl isRefreshing]) {
-                [self.refreshControl endRefreshing];
+    if (networkStatus == NotReachable) { // if there's no internet
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Woops!" message:@"Your device appears to not have an internet connection. Unfortunately Snap Scramble requires internet to play." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertView show];
+    }
+    
+    else { // if there's internet.
+        [self.viewModel retrievePendingMatches:^(NSArray *matches, NSError *error) {
+            if (error) {
+                NSLog(@"Error %@ %@", error, [error userInfo]);
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
             }
             
-            self.currentGames = matches;
-            [self.currentGamesTable reloadData];
-        }
-    }];
+            else {
+                if ([self.refreshControl isRefreshing]) {
+                    [self.refreshControl endRefreshing];
+                }
+                
+                self.currentPendingGames = matches;
+                [self.currentGamesTable reloadData];
+            }
+        }];
+        
+        [self.viewModel retrieveCurrentMatches:^(NSArray *matches, NSError *error) {
+            if (error) {
+                NSLog(@"Error %@ %@", error, [error userInfo]);
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
+            }
+            
+            else {
+                if ([self.refreshControl isRefreshing]) {
+                    [self.refreshControl endRefreshing];
+                }
+                
+                self.currentGames = matches;
+                [self.currentGamesTable reloadData];
+            }
+        }];
+    }
 }
 
 
@@ -203,6 +219,11 @@
                 UIAlertView *alert = [[UIAlertView alloc]  initWithTitle:@"Game deleted successfully." message:nil delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil,  nil];
                 [alert show];
             }
+            
+            else { // if error
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
+            }
         }];
     }
     
@@ -223,6 +244,11 @@
                 [self.currentGamesTable reloadData]; // update table view
                 UIAlertView *alert = [[UIAlertView alloc]  initWithTitle:@"Game deleted successfully." message:nil delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil,  nil];
                 [alert show];
+            }
+            
+            else { // if error
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
             }
         }];
     }
@@ -266,15 +292,41 @@
         
         // if current user is the sender for the round
         if ([[aCurrentPendingGame objectForKey:@"senderName"]  isEqualToString:[PFUser currentUser].username]) {
-            NSString *opponentName = [aCurrentPendingGame objectForKey:@"receiverName"];
-            cell.textLabel.text = [NSString stringWithFormat:@"%@'s turn vs. You", opponentName];
             
-            // check if it is the receiver's (not the current user in this case) turn to reply or to play for the round
-            if ([aCurrentPendingGame objectForKey:@"receiverPlayed"] == [NSNumber numberWithBool:true]) {
-                cell.detailTextLabel.text = @"Opponent's turn to reply";
+            // if the game's receiver wasn't set (i.e. the user force quit the app before receiver could be set), delete it.
+            if([[aCurrentPendingGame objectForKey:@"receiverName"] isEqualToString:@""]) {
+                [self.viewModel deleteGame:aCurrentPendingGame completion:^(BOOL succeeded, NSError *error) {
+                    if (error) {
+                        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                        [alertView show];
+                    }
+                    
+                    else {
+                        NSLog(@"game where receiver was not set has been deleted successfully.");
+                        
+                        for (PFObject *object in self.currentPendingGames) {
+                            if ([object.objectId isEqualToString:aCurrentPendingGame.objectId]) {
+                                [self.currentPendingGames removeObject:object];
+                                break;
+                            }
+                        }
+                        
+                        [self.currentGamesTable reloadData];
+                    }
+                }];
             }
-            else if ([aCurrentPendingGame objectForKey:@"receiverPlayed"] == [NSNumber numberWithBool:false]) {
-                cell.detailTextLabel.text = @"Opponent's turn to play";
+            
+            else { // the game is fine
+                NSString *opponentName = [aCurrentPendingGame objectForKey:@"receiverName"];
+                cell.textLabel.text = [NSString stringWithFormat:@"%@'s turn vs. You", opponentName];
+                
+                // check if it is the receiver's (not the current user in this case) turn to reply or to play for the round
+                if ([aCurrentPendingGame objectForKey:@"receiverPlayed"] == [NSNumber numberWithBool:true]) {
+                    cell.detailTextLabel.text = @"Opponent's turn to reply";
+                }
+                else if ([aCurrentPendingGame objectForKey:@"receiverPlayed"] == [NSNumber numberWithBool:false]) {
+                    cell.detailTextLabel.text = @"Opponent's turn to play";
+                }
             }
         }
     }

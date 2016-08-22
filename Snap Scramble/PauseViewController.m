@@ -80,7 +80,7 @@
     [alert addAction: [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self.viewModel deleteGame:self.createdGame completion:^(BOOL succeeded, NSError *error) {
             if (error) {
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
                 [alertView show];
             }
             
@@ -113,6 +113,8 @@
         [self.viewModel saveCurrentUser:^(BOOL succeeded, NSError *error) {
             if (error) {
                 NSLog(@"Error %@ %@", error, [error userInfo]);
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"A connection error occurred." message:@"Please quit the app and try again." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alertView show];
             }
             
             else {

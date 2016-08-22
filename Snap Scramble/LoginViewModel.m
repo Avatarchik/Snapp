@@ -6,14 +6,13 @@
 //
 //
 
-#import "LoginViewModel.h"
 
+#import "LoginViewModel.h"
 
 @implementation LoginViewModel
 
-- (void)logInUser:(NSString *)email password:(NSString *)password completion:(void (^)(FIRUser *user, NSError *error))completion {
-    [[FIRAuth auth] signInWithEmail:email password:password completion:completion];
+- (void)logInUser:(NSString *)username password:(NSString *)password completion:(void (^)(PFUser *user, NSError *error))completion {
+    [PFUser logInWithUsernameInBackground:username password:password block:completion];
 }
-
 
 @end

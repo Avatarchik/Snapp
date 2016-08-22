@@ -7,12 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "LLSimpleCamera.h"
 #import "Parse/Parse.h"
 
 @interface CameraViewController : UIViewController
 
-@property (nonatomic, strong) UIImage* cameraImage; // preview image
+@property (nonatomic, strong) UIImage* cameraImage; 
 @property (nonatomic, strong) UIImage* originalImage;
 @property (nonatomic, strong) PFObject* createdGame;
 @property (nonatomic, strong) PFUser* opponent;

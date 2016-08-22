@@ -10,6 +10,7 @@
 #import "Snap_Scramble-Swift.h"
 #import <Parse/Parse.h>
 #import "GameOverViewController.h"
+#import <KVNProgress/KVNProgress.h>
 
 @interface GameOverViewController : UIViewController
 

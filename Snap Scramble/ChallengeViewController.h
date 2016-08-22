@@ -16,7 +16,7 @@
 @interface ChallengeViewController : UIViewController <UITableViewDelegate, UITableViewDataSource, ChallengeVCDelegate>
 
 @property (nonatomic, strong) NSArray *currentGames;
-@property (nonatomic, strong) NSArray *currentPendingGames;
+@property (nonatomic, strong) NSMutableArray *currentPendingGames;
 @property (nonatomic, strong) PFObject *selectedGame;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) IBOutlet UITableView *currentGamesTable;

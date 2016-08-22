@@ -36,10 +36,6 @@
         [self.createdGame setObject:[[PFUser currentUser] objectId] forKey:@"senderID"];
         [self.createdGame setObject:[NSNumber numberWithBool:false] forKey:@"receiverPlayed"]; // set that the receiver has not played
         
-        // increment the round
-        self.roundNumber = [self getRoundNumber];
-        [self incrementRoundNumber];
-        
         // set the round object to the game
         [self.createdGame setObject:self.roundObject forKey:@"round"];
         
@@ -62,8 +58,7 @@
         
         // create the round object for the initial game
         self.roundObject = [PFObject objectWithClassName:@"Round"];
-        [self.roundObject setObject:[NSNumber numberWithInt:1] forKey:@"roundNumber"]; // set initial round for a brand new game
-        
+     
         // set the round object to the game
         [self.createdGame setObject:self.roundObject forKey:@"round"];
         
